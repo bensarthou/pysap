@@ -258,6 +258,7 @@ def mr3d_filter(
         verbose=False):
     """ Wrap the Sparse2d 'mr3d_filter'.
     """
+    # WARNING: relative path with ~  doesn't work, use absolute path from /home
     # Generate the command
     cmd = [
         "mr3d_filter",
