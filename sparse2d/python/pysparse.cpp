@@ -88,6 +88,9 @@ BOOST_PYTHON_MODULE(pysparse){
         }
 
     }
+    // End of scope
+
+
 
     // Declares class MRTransform3D, similar to MRTransform but for 3D
     {
@@ -95,7 +98,7 @@ BOOST_PYTHON_MODULE(pysparse){
         typedef bp::class_< MRTransform3D > MRTransform3D_exposer_t;
         MRTransform3D_exposer_t MRTransform3D_exposer = MRTransform3D_exposer_t(
             "MRTransform3D",
-            bp::init< int, bp::optional< int, int, int, int, bool, int, int, int > >(
+            bp::init< int, bp::optional< int, int, int, int, bool, int, int > >(
                 ( bp::arg("type_of_multiresolution_transform"),
                   bp::arg("type_of_lifting_transform")=(int)(3),
                   bp::arg("number_of_scales")=(int)(4),

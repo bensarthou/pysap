@@ -9,13 +9,13 @@
 // Includes
 #include <iostream>
 #include <string>
+#include <sstream>
 #include "NumPyArrayData.h"
-// #include <sstream>
 // #include <sparse2d/IM_Obj.h>
 // #include <sparse2d/IM_IO.h>
 // #include <sparse2d/IM_Prob.h>
 
-#include <sparse3d/MR3D_Obj.h>
+#include <sparse2d/MR3D_Obj.h>
 
 class MRTransform3D {
 
@@ -25,6 +25,7 @@ public:
         int type_of_multiresolution_transform,
         int type_of_lifting_transform=3,
         int number_of_scales=4,
+        int iter=3,
         int type_of_filters=1,
         bool use_l2_norm=false,
         int nb_procs=0,
@@ -34,7 +35,7 @@ public:
     ~MRTransform3D();
 
     // Save transformation method
-    void Save(MR3D &mr);
+    void Save(MR_3D &mr);
 
     // Information method
     void Info();
@@ -50,7 +51,7 @@ public:
     string get_opath() const {return m_opath;}
 
 private:
-    MR3D mr;
+    MR_3D mr;
     FilterAnaSynt fas;
     FilterAnaSynt *ptrfas = NULL;
     bool mr_initialized;
@@ -58,13 +59,16 @@ private:
     int type_of_multiresolution_transform;
     int type_of_lifting_transform;
     int number_of_scales;
+    int iter;
     int type_of_filters;
     bool use_l2_norm;
     int nb_procs;
     int verbose;
 
-    type_transform mr_transform = DEFAULT_TRANSFORM;
+    type_trans_3d mr_transform = TO3_MALLAT;
     type_lift lift_transform = DEF_LIFT;
+    type_sb_filter filter = F_MALLAT_7_9;
+
     sb_type_norm norm = NORM_L1;
 };
 
@@ -87,7 +91,7 @@ MRTransform3D::MRTransform3D(
     this->use_l2_norm = use_l2_norm;
     this->verbose = verbose;
     this->mr_initialized = false;
-    bool use_filter = False
+    bool use_filter = false;
     // The maximum number of threads returned by omp_get_max_threads()
     // (which is the default number of threads used by OMP in parallel
     // regions) can sometimes be far below the number of CPUs.
@@ -104,7 +108,7 @@ MRTransform3D::MRTransform3D(
 
     // Load the mr transform
     if ((this->type_of_multiresolution_transform > 0) && (this->type_of_multiresolution_transform <= NBR_TRANS_3D+1))
-        this->mr_transform = type_transform(this->type_of_multiresolution_transform - 1);
+        this->mr_transform = type_trans_3d(this->type_of_multiresolution_transform - 1);
     else
         throw std::invalid_argument("Invalid MR transform number.");
 
@@ -147,7 +151,7 @@ MRTransform3D::~MRTransform3D(){
 }
 
 // Save transformation method
-void MRTransform3D::Save(MultiResol &mr){
+void MRTransform3D::Save(MR_3D &mr){
 
     // Welcome message
     if (this->verbose > 0)
@@ -181,10 +185,9 @@ void MRTransform3D::Info(){
         cout << "  Lifting transform name: " << StringLSTransform(this->lift_transform) << endl;
     }
     cout << "  Number of scales: " << this->number_of_scales << endl;
+    cout << "---------" << endl;
     }
 
-    cout << "---------" << endl;
-}
 
 // Transform method
 bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
@@ -197,7 +200,7 @@ bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
         cout << "Done." << endl;*/
 
     // Create the transformation
-    Ifloat data = array2image_3d(arr);
+    fltarray data = array2image_3d(arr);
     if (!this->mr_initialized) {
         if ((this->mr_transform == TO3_MALLAT)) {
             fas.Verbose = (Bool)this->verbose;
@@ -234,8 +237,8 @@ bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
     // Return the generated bands data
     bp::list mr_data;
     for (int s=0; s<mr.nbr_band(); s++) {
-        fltarray &tmpband;
-        mr.get_band(s, tmpband)
+        fltarray tmpband;
+        mr.get_band(s, tmpband);
         mr_data.append(image2array_3d(tmpband));
     }
 
@@ -269,8 +272,8 @@ bn::ndarray MRTransform3D::Reconstruct(bp::list mr_data){
 
     // Update transformation
     for (int s=0; s<bp::len(mr_data); s++) {
-        Ifloat band_data = array2image_3d(bp::extract<bn::ndarray>(mr_data[s]));
-        mr.insert_band(band_data, s);
+        fltarray band_data = array2image_3d(bp::extract<bn::ndarray>(mr_data[s]));
+        mr.insert_band(s, band_data);
     }
 
     int Nx = mr.size_cube_nx();
@@ -279,7 +282,7 @@ bn::ndarray MRTransform3D::Reconstruct(bp::list mr_data){
 
 
     // Start the reconstruction
-    Ifloat data(Nx, Ny, Nz, "Reconstruct");
+    fltarray data(Nx, Ny, Nz, "Reconstruct");
     mr.recons(data);
 
     return image2array_3d(data);

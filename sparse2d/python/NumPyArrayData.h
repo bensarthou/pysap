@@ -117,7 +117,7 @@ Ifloat array2image_2d(const bn::ndarray& arr){
 }
 
 // convert functions for 3d arrays
-bn::ndarray image2array_3d(const Ifloat& im){
+bn::ndarray image2array_3d(const fltarray& im){
     // TODO: use buffer
     bn::ndarray arr = bn::zeros(
         bp::make_tuple(im.nx(), im.ny(), im.nz()),
@@ -132,7 +132,7 @@ bn::ndarray image2array_3d(const Ifloat& im){
 	}
     return arr;
 }
-Ifloat array2image_3d(const bn::ndarray& arr){
+fltarray array2image_3d(const bn::ndarray& arr){
     // Input array checks
 	ASSERT_THROW(
         (arr.get_nd() == 3),
@@ -140,7 +140,7 @@ Ifloat array2image_3d(const bn::ndarray& arr){
 
     // Get the data: force cast to float
     // TODO: use buffer
-    Ifloat im(arr.shape(0), arr.shape(1), arr.shape(2));
+    fltarray im(arr.shape(0), arr.shape(1), arr.shape(2));
 	NumPyArrayData<double> arr_data(arr);
 	for (int i=0; i<arr.shape(0); i++) {
 		for (int j=0; j<arr.shape(1); j++) {
