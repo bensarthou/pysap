@@ -11,9 +11,9 @@
 #include <string>
 #include <sstream>
 #include "NumPyArrayData.h"
-// #include <sparse2d/IM_Obj.h>
-// #include <sparse2d/IM_IO.h>
-// #include <sparse2d/IM_Prob.h>
+#include <sparse2d/IM_Obj.h>
+#include <sparse2d/IM_IO.h>
+#include <sparse2d/IM_Prob.h>
 
 #include <sparse2d/MR3D_Obj.h>
 

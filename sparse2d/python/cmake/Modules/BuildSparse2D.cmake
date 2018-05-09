@@ -24,4 +24,4 @@ ExternalProject_Add(sparse2d
 
 set(sparse2d_LIBRARY_DIR ${CMAKE_BINARY_DIR}/extern/lib/ )
 set(sparse2d_INCLUDE_DIR ${CMAKE_BINARY_DIR}/extern/include/ )
-set(sparse2d_LIBRARIES -lmga2d -lsparse2d -lsparse1d -ltools)
+set(sparse2d_LIBRARIES -lmga2d -lsparse2d -lsparse1d -lsparse3d -ltools)
