@@ -10,12 +10,13 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "NumPyArrayData.h"
 #include <sparse2d/IM_Obj.h>
 #include <sparse2d/IM_IO.h>
-#include <sparse2d/IM_Prob.h>
-
+#include <sparse2d/IM3D_IO.h>
 #include <sparse2d/MR3D_Obj.h>
+#include <sparse2d/MR_Obj.h>
+#include <sparse2d/IM_Prob.h>
+#include "NumPyArrayData.h"
 
 class MRTransform3D {
 
@@ -131,7 +132,7 @@ MRTransform3D::MRTransform3D(
         std::stringstream strs;
         strs << type_of_filters;
         this->filter = get_filter_bank((char *)strs.str().c_str());
-        use_filter = True;
+        use_filter = true;
     }
 
     // Change the norm
@@ -179,11 +180,11 @@ void MRTransform3D::Info(){
         cout << "  Filter name: " << StringSBFilter(this->filter) << endl;
         if (this->use_l2_norm)
             cout << "   Use L2-norm." << endl;
-    }
+        }
     if (this->mr_transform == TO3_LIFTING) {
         cout << "  Lifting transform ID: " << this->type_of_lifting_transform << endl;
         cout << "  Lifting transform name: " << StringLSTransform(this->lift_transform) << endl;
-    }
+        }
     cout << "  Number of scales: " << this->number_of_scales << endl;
     cout << "---------" << endl;
     }
@@ -191,13 +192,6 @@ void MRTransform3D::Info(){
 
 // Transform method
 bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
-    // Load the input image
-    /*if (this->verbose > 0)
-        cout << "Loading input image '" << this->m_ipath << "'..." << endl;
-    Ifloat data;
-    io_read_ima_float((char *)this->m_ipath.c_str(), data);
-    if (this->verbose > 0)
-        cout << "Done." << endl;*/
 
     // Create the transformation
     fltarray data = array2image_3d(arr);
@@ -211,7 +205,6 @@ bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
         mr.alloc(data.nx(), data.ny(), data.nz(), this->mr_transform,
                  this->number_of_scales, ptrfas, this->norm);
 
-        // old 2D way
         if (this->mr_transform == TO3_LIFTING)
             mr.LiftingTrans = this->lift_transform;
 
@@ -279,7 +272,6 @@ bn::ndarray MRTransform3D::Reconstruct(bp::list mr_data){
     int Nx = mr.size_cube_nx();
     int Ny = mr.size_cube_ny();
     int Nz = mr.size_cube_nz();
-
 
     // Start the reconstruction
     fltarray data(Nx, Ny, Nz, "Reconstruct");

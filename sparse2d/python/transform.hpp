@@ -124,13 +124,13 @@ MRTransform::MRTransform(
     // Load the lifting transform
     if ((this->type_of_lifting_transform > 0) && (this->type_of_lifting_transform <= NBR_LIFT))
         this->lift_transform = type_lift(this->type_of_lifting_transform);
-    else  
+    else
         throw std::invalid_argument("Invalid lifting transform number.");
 
     // Check the number of scales
     if ((this->number_of_scales <= 1) || (this->number_of_scales > MAX_SCALE))
         throw std::invalid_argument("Bad number of scales ]1; MAX_SCALE].");
-        
+
     // Check the number of iterations
     if ((this->iter <= 1) || (this->iter > 20))
         throw std::invalid_argument("Bad number of iteration ]1; 20].");
@@ -147,7 +147,7 @@ MRTransform::MRTransform(
         this->norm = NORM_L2;
 
     // Load the non orthogonal filter
-    if ((this->type_of_non_orthog_filters > 0) && (this->type_of_non_orthog_filters <= NBR_UNDEC_FILTER)) 
+    if ((this->type_of_non_orthog_filters > 0) && (this->type_of_non_orthog_filters <= NBR_UNDEC_FILTER))
         this->no_filter = type_undec_filter(this->type_of_non_orthog_filters - 1);
 
     // Check input parameters
@@ -231,7 +231,7 @@ bp::list MRTransform::Transform(const bn::ndarray& arr, bool save){
         }
         mr.alloc(data.nl(), data.nc(), this->number_of_scales,
                  this->mr_transform, ptrfas, this->norm,
-                 this->nb_of_undecimated_scales, this->no_filter);     
+                 this->nb_of_undecimated_scales, this->no_filter);
         if (this->mr_transform == TO_LIFTING)
             mr.LiftingTrans = this->lift_transform;
         mr.Border = this->bord;
@@ -274,7 +274,7 @@ bp::list MRTransform::Transform(const bn::ndarray& arr, bool save){
     if (nb_bands_count != mr.nbr_band()) {
         mr_scale[-1] = 1;
     }
-    
+
     // Format the result
     bp::list mr_result;
     mr_result.append(mr_data);
@@ -296,7 +296,7 @@ bn::ndarray MRTransform::Reconstruct(bp::list mr_data){
     for (int s=0; s<bp::len(mr_data); s++) {
         Ifloat band_data = array2image_2d(bp::extract<bn::ndarray>(mr_data[s]));
         mr.insert_band(band_data, s);
-    }    
+    }
 
     // Start the reconstruction
     Ifloat data(mr.size_ima_nl(), mr.size_ima_nc(), "Reconstruct");
@@ -304,4 +304,3 @@ bn::ndarray MRTransform::Reconstruct(bp::list mr_data){
 
     return image2array_2d(data);
 }
-
