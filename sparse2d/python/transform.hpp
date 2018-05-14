@@ -274,7 +274,6 @@ bp::list MRTransform::Transform(const bn::ndarray& arr, bool save){
     if (nb_bands_count != mr.nbr_band()) {
         mr_scale[-1] = 1;
     }
-
     // Format the result
     bp::list mr_result;
     mr_result.append(mr_data);

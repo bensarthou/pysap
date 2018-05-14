@@ -5,7 +5,11 @@
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
 ##########################################################################*/
-
+"Availables transforms:
+1: Mallat 3D
+2: Lifting
+3: A trous
+"
 // Includes
 #include <iostream>
 #include <string>
