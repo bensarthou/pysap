@@ -23,6 +23,8 @@
 #include <sparse2d/IM_Prob.h>
 #include "NumPyArrayData.h"
 
+
+
 #define ASSERT_THROW(a,msg) if (!(a)) throw std::runtime_error(msg);
 
 class MRTransform3D {
@@ -250,19 +252,30 @@ bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
 
     // Get the number of bands for each scale
     bp::list mr_scale;
-    // int nb_bands_count = 0;
-    // for (int s=0; s<mr.nbr_scale(); s++) {
-    //     nb_bands_count += mr.nbr_band_per_resol(s);
-    //     mr_scale.append(mr.nbr_band_per_resol(s));
-    // }
-    // if (nb_bands_count != mr.nbr_band()) {
-    //     mr_scale[-1] = 1;
-    // }
+
+    // WARNING: This code is a fix as the method nbr_band_per_resol() hasn't
+    // been implemented in the 3D case
+
+    // For decimated transforms Mallat and Lifting, this is constant
+    int nbr_band_per_resol_cst = 7;
+    // Idem for undecimated Atrous transform
+    if(this->mr_transform == TO3_ATROUS ){nbr_band_per_resol_cst = 1;}
+
+    int nb_bands_count = 0;
+    for (int s=0; s<mr.nbr_scale(); s++) {
+        nb_bands_count += nbr_band_per_resol_cst;
+        mr_scale.append(nbr_band_per_resol_cst);
+    }
+    if (nb_bands_count != mr.nbr_band()) {
+        mr_scale[-1] = 1;
+    }
 
     // Format the result
     bp::list mr_result;
     mr_result.append(mr_data);
     mr_result.append(mr_scale);
+
+    // cout << "mr_result[1]: " << bp::extract<std::string>(bp::object(mr_result[1]).attr("__str__")())() << endl;
 
     return mr_result;
 }

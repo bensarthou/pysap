@@ -110,6 +110,7 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
             kwargs["number_of_scales"] = self.nb_scale
             self.trf = pysparse.MRTransform(**self.kwargs)
         else:
+            warnings.warn("3D Wavelet only works with binding for now")
             self.trf = None
 
     def __reduce__(self):

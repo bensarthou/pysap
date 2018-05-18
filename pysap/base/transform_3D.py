@@ -65,7 +65,7 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
         self.scales_padds = None
         self.use_wrapping = pysparse is None
 
-        # Data that can be decalred afterward
+        # Data that can be declared afterward
         self._data = None
         self._image_metadata = {}
         self._data_shape = None
@@ -85,7 +85,7 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
             kwargs["number_of_scales"] = self.nb_scale
             self.trf = pysparse.MRTransform(**self.kwargs)
         else:
-            self.trf = None
+            raise NameError('For 3D, only the bindings are working for now')
 
     def __reduce__(self):
         """ The interface to pickle dump call.
@@ -221,8 +221,9 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
         self._iso_shape = self._data_shape[0]
 
         if self.use_wrapping:
-            self._set_transformation_parameters()
-            self._compute_transformation_parameters()
+            raise NameError('For 3D, only the bindings are working for now')
+            # self._set_transformation_parameters()
+            # self._compute_transformation_parameters()
 
     def _get_data(self):
         """ Get the input data array.
