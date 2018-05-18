@@ -5,15 +5,16 @@
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
 # for details.
 ##########################################################################*/
-"Availables transforms:
+/*Availables transforms:
 1: Mallat 3D
 2: Lifting
-3: A trous
-"
+3: A trous*/
+
 // Includes
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <typeinfo>
 #include <sparse2d/IM_Obj.h>
 #include <sparse2d/IM_IO.h>
 #include <sparse2d/IM3D_IO.h>
@@ -21,6 +22,8 @@
 #include <sparse2d/MR_Obj.h>
 #include <sparse2d/IM_Prob.h>
 #include "NumPyArrayData.h"
+
+#define ASSERT_THROW(a,msg) if (!(a)) throw std::runtime_error(msg);
 
 class MRTransform3D {
 
@@ -225,6 +228,12 @@ bp::list MRTransform3D::Transform(const bn::ndarray& arr, bool save){
         cout << "  Array shape: " << arr.shape(0) << ", " << arr.shape(1) << ", " << arr.shape(2) << endl;
         cout << "  Save transform: " << save << endl;
     }
+
+
+    ASSERT_THROW(
+        ((int)pow(2, this->number_of_scales) <= (int)min(arr.shape(0), min(arr.shape(1), arr.shape(2)))),
+        "Number of scales is too damn high (for the size of the data)");
+
     mr.transform(data);
 
     // Save transform if requested
@@ -270,6 +279,10 @@ bn::ndarray MRTransform3D::Reconstruct(bp::list mr_data){
     // Update transformation
     for (int s=0; s<bp::len(mr_data); s++) {
         fltarray band_data = array2image_3d(bp::extract<bn::ndarray>(mr_data[s]));
+        // cout << "Size of inserted band ";
+        // cout << "nb_e:"<< band_data.n_elem() << "/ndim:" << band_data.naxis()\
+        // << "/nx:" << band_data.nx() << "/ny:"  << band_data.ny() << "nz:"  << band_data.nz() <<  endl;
+
         mr.insert_band(s, band_data);
     }
 

@@ -294,6 +294,10 @@ bn::ndarray MRTransform::Reconstruct(bp::list mr_data){
     // Update transformation
     for (int s=0; s<bp::len(mr_data); s++) {
         Ifloat band_data = array2image_2d(bp::extract<bn::ndarray>(mr_data[s]));
+        // cout << "Size of inserted band ";
+        // cout << "nb_e:"<< band_data.n_elem() << "/ndim:" << band_data.naxis()\
+        // << "/nx:" << band_data.nx() << "/ny:"  << band_data.ny() <<  endl;
+
         mr.insert_band(band_data, s);
     }
 
