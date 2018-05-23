@@ -62,7 +62,7 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
 
     Available transforms are define in 'pysap.transform'.
     """
-    def __init__(self, nb_scale, verbose=0, **kwargs):
+    def __init__(self, nb_scale, verbose=0, dim=2, **kwargs):
         """ Initialize the WaveletTransformBase class.
 
         Parameters
@@ -89,6 +89,7 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
         self.scales_lengths = None
         self.scales_padds = None
         self.use_wrapping = pysparse is None
+        self.data_dim = dim
 
         # Data that can be decalred afterward
         self._data = None
@@ -108,10 +109,17 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
             kwargs["type_of_multiresolution_transform"] = (
                 self.__isap_transform_id__)
             kwargs["number_of_scales"] = self.nb_scale
-            self.trf = pysparse.MRTransform(**self.kwargs)
+            if self.data_dim == 2:
+                self.trf = pysparse.MRTransform(**self.kwargs)
+            elif self.data_dim == 3:
+                self.trf = pysparse.MRTransform3D(**self.kwargs)
+            else:
+                raise NameError('Please define a correct dimension for data')
         else:
-            warnings.warn("3D Wavelet only works with binding for now")
-            self.trf = None
+            if self.data_dim == 2:
+                self.trf = None
+            elif self.data_dim == 3:
+                raise NameError('For 3D, only the bindings work for now')
 
     def __reduce__(self):
         """ The interface to pickle dump call.
@@ -233,8 +241,8 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
             print("[info] Replacing existing input data array.")
         if not all([e == data.shape[0] for e in data.shape]):
             raise ValueError("Expect a square shape data.")
-        if data.ndim != 2:
-            raise ValueError("Expect a two-dim data array.")
+        if data.ndim != self.data_dim:
+            raise ValueError("Expect a two or three dim data array.")
         if self.is_decimated and not (data.shape[0] // 2**(self.nb_scale) > 0):
             raise ValueError("Can't decimate the data with the specified "
                              "number of scales.")

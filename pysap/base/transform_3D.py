@@ -20,7 +20,7 @@ import warnings
 # Package import
 import pysap
 from .utils import with_metaclass
-from .transform imort MetaRegister
+from .transform import MetaRegister
 from pysap.plotting import plot_transform
 try:
     import pysparse
@@ -37,7 +37,7 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
 
     Available transforms are define in 'pysap.transform'.
     """
-    def __init__(self, nb_scale, verbose=0, **kwargs):
+    def __init__(self, nb_scale, verbose=0, transform_id=3, **kwargs):
         """ Initialize the WaveletTransformBase class.
 
         Parameters
@@ -57,7 +57,7 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
         self.nb_band_per_scale = None
         self.bands_lengths = None
         self.bands_shapes = None
-        self.isap_transform_id = None
+        self.isap_transform_id = transform_id
         self.flatten_fct = None
         self.unflatten_fct = None
         self.is_decimated = None
@@ -81,9 +81,9 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
         # Transformation
         if not self.use_wrapping:
             kwargs["type_of_multiresolution_transform"] = (
-                self.__isap_transform_id__)
+                self.isap_transform_id)
             kwargs["number_of_scales"] = self.nb_scale
-            self.trf = pysparse.MRTransform(**self.kwargs)
+            self.trf = pysparse.MRTransform3D(**self.kwargs)
         else:
             raise NameError('For 3D, only the bindings are working for now')
 
@@ -205,10 +205,10 @@ class WaveletTransformBase3D(with_metaclass(MetaRegister)):
         """
         if self.verbose > 0 and self._data is not None:
             print("[info] Replacing existing input data array.")
-        if not all([e == data.shape[0] for e in data.shape]):
-            raise ValueError("Expect a square shape data.")
-        if data.ndim != 2:
-            raise ValueError("Expect a two-dim data array.")
+        # if not all([e == data.shape[0] for e in data.shape]):
+        #     raise ValueError("Expect a square shape data.")
+        if data.ndim != 3:
+            raise ValueError("Expect a three-dim data array.")
         if self.is_decimated and not (data.shape[0] // 2**(self.nb_scale) > 0):
             raise ValueError("Can't decimate the data with the specified "
                              "number of scales.")
