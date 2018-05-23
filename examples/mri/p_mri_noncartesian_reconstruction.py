@@ -1,6 +1,6 @@
 """
-Neuroimaging cartesian reconstruction
-=====================================
+Neuroimaging non-cartesian Parallel reception reconstruction
+============================================================
 
 Credit: L Elgueddari, S.Lannuzel
 
@@ -13,7 +13,7 @@ measurments.
 import pysap
 from pysap.data import get_sample_data
 from pysap.plugins.mri.reconstruct.linear import Wavelet2
-from pysap.plugins.mri.reconstruct.reconstruct import FFT2
+from pysap.plugins.mri.reconstruct.reconstruct import NFFT2
 from pysap.plugins.mri.parallel_mri.utils import prod_over_maps
 from pysap.plugins.mri.parallel_mri.utils import function_over_maps
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_fista
@@ -25,7 +25,6 @@ from pysap.plugins.mri.parallel_mri.extract_sensitivity_maps import get_Smaps
 
 # Third party import
 import numpy as np
-import scipy.fftpack as pfft
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 
@@ -40,22 +39,19 @@ mask = get_sample_data("mri-mask")
 image = pysap.Image(data=np.abs(SOS), metadata=mask.metadata)
 image.show()
 
+
 #############################################################################
 # Generate the kspace
 # -------------------
-#
-# From the 2D brain slice and the acquistion mask, we generate the acquisition
-# measurments, the observed kspace.
-# We then reconstruct the zero order solution.
+
+# Get the locations of the kspace samples and the associated observations
+kspace_loc = convert_mask_to_locations(mask.data)
+
+fourier_op_c = NFFT2(samples=kspace_loc, shape=image.shape)
 
 # Generate the subsampled kspace
 Sl = prod_over_maps(Smaps, SOS)
-kspace_data = function_over_maps(pfft.fft2, Sl)
-kspace_data = prod_over_maps(kspace_data, mask.data)
-mask.show()
-# Get the locations of the kspace samples
-kspace_loc = convert_mask_to_locations(mask.data)
-
+kspace_data = function_over_maps(fourier_op_c.op, Sl)
 
 #############################################################################
 # FISTA optimization
@@ -66,10 +62,12 @@ kspace_loc = convert_mask_to_locations(mask.data)
 # maximum number of iterations. Fill free to play with this parameter.
 
 # Start the FISTA reconstruction
-max_iter = 10
+max_iter = 20
+
 linear_op = Wavelet2(wavelet_name="UndecimatedBiOrthogonalTransform",
                      nb_scale=4)
-fourier_op = FFT2(samples=kspace_loc, shape=(512, 512))
+
+fourier_op = NFFT2(samples=kspace_loc, shape=(512, 512))
 gradient_op = Grad_pMRI(data=kspace_data,
                         fourier_op=fourier_op,
                         linear_op=linear_op,
@@ -100,15 +98,16 @@ plt.show()
 # maximum number of iterations. Fill free to play with this parameter.
 
 # Start the CONDAT-VU reconstruction
-max_iter = 1
+max_iter = 10
 gradient_op_cd = Grad_pMRI(data=kspace_data,
                            fourier_op=fourier_op,
                            S=Smaps)
+
 x_final, transform = sparse_rec_condatvu(
     gradient_op=gradient_op_cd,
     linear_op=linear_op,
     std_est=None,
-    std_est_method="dual",
+    std_est_method=None,
     std_thr=2.,
     mu=0,
     tau=None,

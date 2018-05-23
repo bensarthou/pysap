@@ -25,8 +25,8 @@ from modopt.math.matrix import PowerMethod
 from modopt.opt.gradient import GradBasic
 
 
-class Grad2D_pMRI_analysis(GradBasic, PowerMethod):
-    """ Gradient 2D synthesis class.
+class Grad_pMRI_analysis(GradBasic, PowerMethod):
+    """ Gradient synthesis class.
 
     This class defines the grad operators for:
             (1/2) * sum(||Ft Sl x - yl||^2_2,l)
@@ -40,17 +40,19 @@ class Grad2D_pMRI_analysis(GradBasic, PowerMethod):
     S: np.ndarray
         sensitivity matrix
     """
-    def __init__(self, data, fourier_op, S):
-        """ Initilize the 'GradSynthesis2' class.
+    def __init__(self, data, fourier_op, S=None):
+        """ Initilize the 'GradSynthesis' class.
         """
 
         self.fourier_op = fourier_op
-        self.S = S
+        self.p_MRI = False if S is None else True
+        if self.p_MRI:
+            self.S = S
         GradBasic.__init__(self, data, self._analy_op_method,
                            self._analy_rsns_op_method)
         PowerMethod.__init__(self, self.trans_op_op, self.fourier_op.shape,
                              data_type="complex128", auto_run=False)
-        self.get_spec_rad(extra_factor=1.1)
+        self.get_spec_rad(extra_factor=1.1, max_iter=5)
 
     def _analy_op_method(self, x):
         """ MX operation.
@@ -68,8 +70,11 @@ class Grad2D_pMRI_analysis(GradBasic, PowerMethod):
         result: np.ndarray
             the operation result (the recovered kspace).
         """
-        return function_over_maps(self.fourier_op.op,
-                                  prod_over_maps(self.S, x))
+        if self.p_MRI:
+            return function_over_maps(self.fourier_op.op,
+                                      prod_over_maps(self.S, x))
+        else:
+            return self.fourier_op.op(x)
 
     def _analy_rsns_op_method(self, x):
         """ MtX operation.
@@ -80,47 +85,55 @@ class Grad2D_pMRI_analysis(GradBasic, PowerMethod):
         Parameters
         ----------
         x: np.ndarray
-            input kspace 2D array.
+            input kspace nD array.
 
         Returns
         -------
         result: np.ndarray
             the operation result.
         """
-        y = function_over_maps(self.fourier_op.adj_op, x)
-        return np.sum(prod_over_maps(y, np.conj(self.S)), axis=2)
+        if self.p_MRI:
+            y = function_over_maps(self.fourier_op.adj_op, x)
+            return np.sum(prod_over_maps(y, np.conj(self.S)), axis=0)
+        else:
+            return self.fourier_op.adj_op(x)
 
 
-class Grad2D_pMRI_synthesis(GradBasic, PowerMethod):
-    """ Gradient 2D synthesis class.
+class Grad_pMRI_synthesis(GradBasic, PowerMethod):
+    """ Gradient nD synthesis class.
 
     This class defines the grad operators for |M*F*invL*alpha - data|**2.
 
     Parameters
     ----------
     data: np.ndarray
-        input 2D data array.
+        input nD data array.
     fourier_op: instance
         a Fourier operator instance.
     linear_op: object
         a linear operator instance.
-    S: np.ndarray  (image_shape, L)
+    S: np.ndarray  (L, image_shape)
         The sensitivity maps of size.
     """
-    def __init__(self, data, fourier_op, linear_op, S):
+    def __init__(self, data, fourier_op, linear_op, S=None):
         """ Initilize the 'GradSynthesis2' class.
         """
 
         self.fourier_op = fourier_op
         self.linear_op = linear_op
-        self.S = S
+        self.p_MRI = True
+        if S is not None:
+            self.S = S
+        else:
+            self.p_MRI = False
+
         GradBasic.__init__(self, data, self._synth_op_method,
                            self._synth_trans_op_method)
         coef = linear_op.op(np.zeros(fourier_op.shape).astype(np.complex))
         self.linear_op_coeffs_shape = coef.shape
         PowerMethod.__init__(self, self.trans_op_op, coef.shape,
                              data_type="complex128", auto_run=False)
-        self.get_spec_rad(extra_factor=1.1)
+        self.get_spec_rad(extra_factor=1.1, max_iter=5)
 
     def _synth_op_method(self, x):
         """ MX operation.
@@ -138,11 +151,12 @@ class Grad2D_pMRI_synthesis(GradBasic, PowerMethod):
         result: np.ndarray
             the operation result (the recovered kspace).
         """
-
-        rsl = np.zeros(self.obs_data.shape).astype('complex128')
         img = self.linear_op.adj_op(x)
-        for l in range(self.S.shape[2]):
-            rsl[:, :, l] = self.fourier_op.op(self.S[:, :, l] * img)
+        if self.p_MRI:
+            rsl = np.asarray([self.fourier_op.op(self.S[l] * img) for l
+                              in range(self.S.shape[0])])
+        else:
+            rsl = self.fourier_op.op(img)
         return rsl
 
     def _synth_trans_op_method(self, x):
@@ -163,15 +177,18 @@ class Grad2D_pMRI_synthesis(GradBasic, PowerMethod):
         """
 
         rsl = np.zeros(self.linear_op_coeffs_shape).astype('complex128')
-        for l in range(self.S.shape[2]):
-            tmp = self.fourier_op.adj_op(x[:, :, l])
-            rsl += self.linear_op.op(tmp *
-                                     np.conj(self.S[:, :, l]))
+        if self.p_MRI:
+            tmp = [self.fourier_op.adj_op(x[l]) for l in
+                   range(self.S.shape[0])]
+            rsl = np.sum([self.linear_op.op(tmp[l] * np.conj(self.S[l]))
+                          for l in range(self.S.shape[0])], axis=0)
+        else:
+            rsl = self.linear_op.op(self.fourier_op.adj_op(x))
         return rsl
 
 
-class Grad2D_pMRI(Grad2D_pMRI_analysis, Grad2D_pMRI_synthesis):
-    """ Gradient for 2D parallel imaging reconstruction.
+class Grad_pMRI(Grad_pMRI_analysis, Grad_pMRI_synthesis):
+    """ Gradient for parallel imaging reconstruction.
 
     This class defines the datafidelity terms methods that will be defined by
     derived gradient classes:
@@ -181,29 +198,33 @@ class Grad2D_pMRI(Grad2D_pMRI_analysis, Grad2D_pMRI_synthesis):
     * (1/2) * sum(||Ft Sl x - yl||^2_2,l)
     * (1/2) * sum(||Ft Sl L* alpha - yl||^2_2,l)
     """
-    def __init__(self, data, fourier_op, S, linear_op=None, check_lips=False):
+    def __init__(self, data, fourier_op, S=None, linear_op=None,
+                 check_lips=False):
         """ Initilize the 'Grad2D_pMRI' class.
 
         Parameters
         ----------
         data: np.ndarray
-            input 2D data array.
+            input nd data array.
         fourier_op: instance
             a Fourier operator instance derived from the FourierBase' class.
         linear_op: instance
             a Linear operator instance.
         """
-        if S.shape[:2] != fourier_op.shape:
-            raise ValueError('Matrix dimension not aligned')
+        if S is not None:
+            self.p_MRI = True
+            if S[0].shape != fourier_op.shape:
+                raise ValueError('Matrix dimension not aligned')
+        else:
+            self.p_MRI = False
 
         if linear_op is None:
-            Grad2D_pMRI_analysis.__init__(self, data, fourier_op, S)
+            Grad_pMRI_analysis.__init__(self, data, fourier_op, S)
             if check_lips:
                 xinit_shape = fourier_op.img_shape
             self.analysis = True
         else:
-            Grad2D_pMRI_synthesis.__init__(self, data, fourier_op, linear_op,
-                                           S)
+            Grad_pMRI_synthesis.__init__(self, data, fourier_op, linear_op, S)
             if check_lips:
                 xinit_shape = self.linear_op_coeffs_shape
 

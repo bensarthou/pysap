@@ -12,21 +12,23 @@ This module contains linears operators classes.
 
 
 # Package import
-from builtins import zip
 import pysap
-from .utils import flatten
-from .utils import unflatten
+from .utils import flatten_swtn
+from .utils import unflatten_swtn
+from .utils import flatten_wave
+from .utils import unflatten_wave
 
 # Third party import
 import numpy
+import pywt
 
 
-class Wavelet2(object):
-    """ The 2D wavelet transform class.
+class pyWavelet3(object):
+    """ The 3D wavelet transform class from pyWavelets package.
     """
-    def __init__(self, wavelet_name, nb_scale=4, verbose=0):
-        """ Initialize the 'Wavelet2' class.
-
+    def __init__(self, wavelet_name, nb_scale=4, verbose=0, undecimated=False):
+        """ Initialize the 'pyWavelet3' class.
+            print(x_new.shape)
         Parameters
         ----------
         wavelet_name: str
@@ -35,23 +37,25 @@ class Wavelet2(object):
             the number of scales in the decomposition.
         verbose: int, default 0
             the verbosity level.
+        undecimated: bool, default False
+            enable use undecimated wavelet transform.
         """
         self.nb_scale = nb_scale
-        self.flatten = flatten
-        self.unflatten = unflatten
-        if wavelet_name not in pysap.AVAILABLE_TRANSFORMS:
+        if wavelet_name not in pywt.wavelist():
             raise ValueError(
                 "Unknown transformation '{0}'.".format(wavelet_name))
-        transform_klass = pysap.load_transform(wavelet_name)
-        self.transform = transform_klass(
-            nb_scale=self.nb_scale, verbose=verbose)
+        self.transform = pywt.Wavelet(wavelet_name)
+        self.nb_scale = nb_scale-1
+        self.undecimated = undecimated
+        self.unflatten = unflatten_swtn if undecimated else unflatten_wave
+        self.flatten = flatten_swtn if undecimated else flatten_wave
         self.coeffs_shape = None
 
     def get_coeff(self):
-        return self.transform.analysis_data
+        return self.coeffs
 
     def set_coeff(self, coeffs):
-        self.transform.analysis_data = coeffs
+        self.coeffs = coeffs
 
     def op(self, data):
         """ Define the wavelet operator.
@@ -61,7 +65,7 @@ class Wavelet2(object):
         Parameters
         ----------
         data: ndarray or Image
-            input 2D data array.
+            input 3D data array.
 
         Returns
         -------
@@ -70,10 +74,16 @@ class Wavelet2(object):
         """
         if isinstance(data, numpy.ndarray):
             data = pysap.Image(data=data)
-        self.transform.data = data
-        self.transform.analysis()
-        coeffs, self.coeffs_shape = flatten(self.transform.analysis_data)
-        return coeffs
+        if self.undecimated:
+            coeffs_dict = pywt.swtn(data, self.transform, level=self.nb_scale)
+            coeffs, self.coeffs_shape = flatten_swtn(coeffs_dict)
+            return coeffs
+        else:
+            coeffs_dict = pywt.wavedecn(data,
+                                        self.transform,
+                                        level=self.nb_scale)
+            self.coeffs, self.coeffs_shape = flatten_wave(coeffs_dict)
+            return self.coeffs
 
     def adj_op(self, coeffs, dtype="array"):
         """ Define the wavelet adjoint operator.
@@ -93,11 +103,19 @@ class Wavelet2(object):
         data: ndarray
             the reconstructed data.
         """
-        self.transform.analysis_data = unflatten(coeffs, self.coeffs_shape)
-        image = self.transform.synthesis()
+        self.coeffs = coeffs
+        if self.undecimated:
+            coeffs_dict = unflatten_swtn(coeffs, self.coeffs_shape)
+            data = pywt.iswtn(coeffs_dict,
+                              self.transform)
+        else:
+            coeffs_dict = unflatten_wave(coeffs, self.coeffs_shape)
+            data = pywt.waverecn(
+                coeffs=coeffs_dict,
+                wavelet=self.transform)
         if dtype == "array":
-            return image.data
-        return image
+            return data
+        return pysap.Image(data=data)
 
     def l2norm(self, shape):
         """ Compute the L2 norm.
@@ -113,10 +131,11 @@ class Wavelet2(object):
             the L2 norm.
         """
         # Create fake data
+        print(shape)
         shape = numpy.asarray(shape)
         shape += shape % 2
         fake_data = numpy.zeros(shape)
-        fake_data[list(zip(shape // 2))] = 1
+        fake_data[zip(shape / 2)] = 1
 
         # Call mr_transform
         data = self.op(fake_data)
