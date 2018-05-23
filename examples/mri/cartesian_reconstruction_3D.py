@@ -34,14 +34,12 @@ from scipy.io import loadmat
 import matplotlib.pyplot as plt
 
 # Load input data
-filename = '/neurospin/optimed/LoubnaElGueddari/p_MRI_CSGRE_3D/' \
-            '2018-01-15_32ch_ref_nc1000_data/' \
-            'meas_MID14_gre_800um_iso_128x128x128_FID24.mat'
+filename = '/volatile/bsarthou/meas_MID14_gre_800um_iso_128x128x128_FID24.mat'
 Iref = loadmat(filename)['ref']
 
 imshow3D(Iref, display=True)
 
-samples = loadmat('/volatile/data/sampling_schemes/'
+samples = loadmat('/volatile/bsarthou/'
                   'samples_sparkling_3D_N128_502x1536x8_FID4971.mat')['samples']
 samples = normalize_samples(samples)
 cartesian_samples = convert_locations_to_mask(samples, [128, 128, 128])
