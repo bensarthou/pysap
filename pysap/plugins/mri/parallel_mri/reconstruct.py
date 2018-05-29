@@ -149,7 +149,8 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
                         std_est_method=None, std_thr=2.,
                         mu=1e-6, tau=None, sigma=None, relaxation_factor=1.0,
                         nb_of_reweights=1, max_nb_of_iter=150,
-                        add_positivity=False, atol=1e-4, verbose=0):
+                        add_positivity=False, atol=1e-4, verbose=0,
+                        get_cost=False):
     """ The Condat-Vu sparse reconstruction with reweightings.
 
     .. note:: At the moment, supports only 2D data.
@@ -194,6 +195,8 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         tolerance threshold for convergence.
     verbose: int, default 0
         the verbosity level.
+    get_cost: bool (default False)
+        computes the cost of the objective function
 
     Returns
     -------
@@ -313,15 +316,23 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         tau_update=None,
         auto_iterate=False)
 
+    if get_cost:
+        cost = np.zeros(max_nb_of_iter)
     # Perform the first reconstruction
     if verbose > 0:
         print("Starting optimization...")
     with progressbar.ProgressBar(redirect_stdout=True,
                                  max_value=max_nb_of_iter) as bar:
         for i in range(max_nb_of_iter):
+            if get_cost:
+                cost[i] = cost_op.cost
             opt._update()
+            if opt.converge:
+                print(' - Converged!')
+                if get_cost:
+                    cost = cost[0:i]
+                break
             bar.update(i)
-
 
     opt.x_final = opt._x_new
     opt.y_final = opt._y_new
@@ -361,4 +372,7 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
     linear_op.set_coeff(linear_op.unflatten(
                         opt.y_final, linear_op.coeffs_shape))
 
-    return x_final, linear_op.transform
+    if get_cost:
+        return x_final, linear_op.transform, cost
+    else:
+        return x_final, linear_op.transform
