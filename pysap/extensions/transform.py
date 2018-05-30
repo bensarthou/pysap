@@ -609,8 +609,8 @@ class OnLine44AndOnColumn53(ISAPWaveletTransformBase):
 class BiOrthogonalTransform3D(ISAPWaveletTransformBase):
     """ Mallat's 3D wavelet transform (7/9 biorthogonal filters)
     """
-    def __init__(self, nb_scale, verbose):
-        ISAPWaveletTransformBase.__init__(self, nb_scale=nb_scale, dim=3)
+    def __init__(self, nb_scale, verbose, **kwargs):
+        ISAPWaveletTransformBase.__init__(self, nb_scale=nb_scale, dim=3, **kwargs)
 
     __isap_transform_id__ = 1
     __isap_name__ = "3D Wavelet transform via lifting scheme"
