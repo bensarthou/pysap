@@ -45,7 +45,7 @@ Available transform from ISAP are:
 
 For 3D:
 
-- Mallat3DWaveletTransform79Filters
+- BiOrthogonalTransform3D
 - Wavelet3DTransformViaLiftingScheme
 - ATrou3D
 """
@@ -606,7 +606,7 @@ class OnLine44AndOnColumn53(ISAPWaveletTransformBase):
 #####################
 
 
-class Mallat3DWaveletTransform79Filters(ISAPWaveletTransformBase):
+class BiOrthogonalTransform3D(ISAPWaveletTransformBase):
     """ Mallat's 3D wavelet transform (7/9 biorthogonal filters)
     """
     def __init__(self, nb_scale, verbose):
