@@ -22,6 +22,7 @@ from pysap.plugins.mri.reconstruct_3D.utils import convert_locations_to_mask
 from pysap.plugins.mri.reconstruct_3D.utils import convert_mask_to_locations_3D
 from pysap.plugins.mri.parallel_mri.gradient import Grad_pMRI
 from pysap.plugins.mri.reconstruct_3D.linear import pyWavelet3
+from pysap.plugins.mri.reconstruct.linear import Wavelet2
 from pysap.plugins.mri.reconstruct_3D.fourier import FFT3
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_fista
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_condatvu
@@ -66,8 +67,13 @@ imshow3D(np.abs(image_rec0), display=False)
 
 max_iter = 10
 
-linear_op = pyWavelet3(wavelet_name="sym4",
-                       nb_scale=4)
+# linear_op = pyWavelet3(wavelet_name="sym4",
+#                        nb_scale=4)
+
+linear_op = Wavelet2(
+        nb_scale=4,
+        wavelet_name='ATrou3D')
+
 
 fourier_op = FFT3(samples=kspace_loc, shape=Iref.shape)
 gradient_op = Grad_pMRI(data=kspace_data,

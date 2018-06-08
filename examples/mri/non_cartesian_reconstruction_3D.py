@@ -24,6 +24,7 @@ from pysap.plugins.mri.parallel_mri.gradient import Grad_pMRI
 # from pysap.plugins.mri.reconstruct_3D.gradient import GradSynthesis3
 # from pysap.plugins.mri.reconstruct_3D.gradient import GradAnalysis3
 from pysap.plugins.mri.reconstruct_3D.linear import pyWavelet3
+from pysap.plugins.mri.reconstruct.linear import Wavelet2
 from pysap.plugins.mri.reconstruct_3D.fourier import NFFT3
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_fista
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_condatvu
@@ -71,13 +72,18 @@ imshow3D(np.abs(image_rec0), display=True)
 
 max_iter = 10
 
-linear_op = pyWavelet3(wavelet_name="sym4",
-                       nb_scale=4)
+# linear_op = pyWavelet3(wavelet_name="bior6.8",
+#                        nb_scale=3)
+
+linear_op = Wavelet2(
+        nb_scale=3,
+        wavelet_name='ATrou3D')
+
 
 fourier_op = NFFT3(samples=kspace_loc, shape=Iref.shape)
 gradient_op = Grad_pMRI(data=kspace_data,
-                          fourier_op=fourier_op,
-                          linear_op=linear_op)
+                        fourier_op=fourier_op,
+                        linear_op=linear_op)
 
 x_final, transform, cost = sparse_rec_fista(
     gradient_op=gradient_op,
@@ -95,7 +101,7 @@ plt.show()
 
 
 gradient_op_cd = Grad_pMRI(data=kspace_data,
-                             fourier_op=fourier_op)
+                           fourier_op=fourier_op)
 x_final, transform = sparse_rec_condatvu(
     gradient_op=gradient_op_cd,
     linear_op=linear_op,
