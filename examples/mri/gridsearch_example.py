@@ -26,6 +26,9 @@ from pysap.plugins.mri.gridsearch.data import load_exbaboon_512_retrospection
 from pysap.plugins.mri.gridsearch.study_launcher import _gather_result
 from pysap.base.gridsearch import grid_search
 from pysap.plugins.mri.gridsearch.reconstruct_gridsearch import *
+from pysap.data import get_sample_data
+from pysap.plugins.mri.reconstruct.utils import convert_mask_to_locations
+import scipy.fftpack as pfft
 
 from modopt.math.metrics import ssim, snr, psnr, nrmse
 
@@ -63,9 +66,35 @@ n_jobs = 16
 verbose_reconstruction = 11
 verbose_gridsearch = 11
 
-# data loading
-res = load_exbaboon_512_retrospection(sigma, mask_type, acc_factor)
-ref, loc, kspace, binmask, info = res[0], res[1], res[2], res[3], res[4]
+# # data loading (with Baboon data, not available here)
+# res = load_exbaboon_512_retrospection(sigma, mask_type, acc_factor)
+# ref, loc, kspace, binmask, info = res[0], res[1], res[2], res[3], res[4]
+
+# Loading input data
+ref = get_sample_data("mri-slice-nifti").data
+ref += np.random.randn(*ref.shape) * 20.
+binmask = get_sample_data("mri-mask").data
+info = {'Angle(degree)': 25, 'Slice-thickness(mm)': 3, 'acc_factor': None,
+        'psnr': 16.677935141141678, 'Tobs(ms)': 30.72, 'sigma': 0.1,
+        'TR(ms)': 550, 'N': 512, 'Contrast': 'T2*w', 'TE(ms)': 30,
+        'FOV(mm)': 200, 'mask_type': 'cartesianR4', 'snr': 39.00693811625058}
+
+#############################################################################
+# Generate the kspace
+# -------------------
+#
+# From the 2D brain slice and the acquistion mask, we generate the acquisition
+# measurments, the observed kspace.
+# We then reconstruct the zero order solution.
+
+
+# Generate the subsampled kspace
+kspace_mask = pfft.ifftshift(binmask)
+kspace = pfft.fft2(ref) * kspace_mask
+
+# Get the locations of the kspace samples
+loc = convert_mask_to_locations(kspace_mask)
+
 
 #############################################################################
 # Declaration of metrics
