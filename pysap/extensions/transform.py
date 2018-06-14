@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 ##########################################################################
-# XXX - Copyright (C) XXX, 2017
+# pySAP - Copyright (C) CEA, 2017 - 2018
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
@@ -218,8 +219,10 @@ class ISAPWaveletTransformBase(WaveletTransformBase):
         bands_lengths = (
             iso_shape * numpy.ones((nb_scale, nb_band), dtype=int))
         bands_lengths[-1, 1:] = 0
+        print('before:', bands_lengths)
         for i, scale in enumerate(bands_lengths):
-            scale /= 2**(i + scale_shift)
+            bands_lengths[i] = scale / 2**(i + scale_shift)
+        print('after:', bands_lengths)
         bands_lengths[-1, :] *= 2
         bands_lengths = (bands_lengths**2).astype(int)
         bands_shapes = WaveletTransformBase.bands_shapes(bands_lengths)

@@ -8,5 +8,9 @@
 ##########################################################################
 
 """
-This module defines all the MRI related plugins.
+This module contains shortcuts to cost classes.
 """
+
+# Package import
+from pysap.plugins.mri.reconstruct.cost import DualGapCost
+from pysap.plugins.mri.reconstruct.cost import MetricCost
