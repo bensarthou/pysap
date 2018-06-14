@@ -8,17 +8,19 @@
 ##########################################################################
 
 # System import
-import numpy as np
+from scipy.io import loadmat, savemat
+import numpy
 
 # Package import
 from .loader_base import LoaderBase
 from pysap.base.image import Image
+from pysap.base.exceptions import Exception
 
 
-class npBinary(LoaderBase):
-    """ Define the numpy binary loader.
+class MAT(LoaderBase):
+    """ Define the Fits loader.
     """
-    allowed_extensions = [".npy"]
+    allowed_extensions = [".mat"]
 
     def load(self, path):
         """ A method that load the image data and associated metadata.
@@ -33,9 +35,9 @@ class npBinary(LoaderBase):
         image: Image
             the loaded image.
         """
-
-        cube = np.load(path)
+        cube = loadmat(path)['samples']  # ## TODO: Make it more general
         return Image(data_type="scalar",
+                     metadata={"path": path},
                      data=cube)
 
     def save(self, image, outpath, clobber=True):
@@ -47,6 +49,8 @@ class npBinary(LoaderBase):
             the image to be saved.
         outpath: str
             the path where the the image will be saved.
+        clobber: bool (optional, default True)
+            If True, and if filename already exists, it will overwrite the
+            file.
         """
-
-        np.save(outpath, image.data)
+        savemat({'samples': image.data})

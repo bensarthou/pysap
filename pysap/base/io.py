@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 ##########################################################################
-# XXX - Copyright (C) XXX, 2017
+# pySAP - Copyright (C) CEA, 2017 - 2018
 # Distributed under the terms of the CeCILL-B license, as published by
 # the CEA-CNRS-INRIA. Refer to the LICENSE file or to
 # http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
@@ -14,11 +15,12 @@ import pysap
 from pysap.base.exceptions import Exception
 from pysap.base.loaders import FITS
 from pysap.base.loaders import NIFTI
+from pysap.base.loaders import MAT
 from pysap.base.loaders import npBinary
 
 # Global parameters
 # > define all the available loaders
-LOADERS = [FITS, NIFTI, npBinary]
+LOADERS = [FITS, NIFTI, MAT, npBinary]
 
 
 def load(path, dtype=numpy.single):
