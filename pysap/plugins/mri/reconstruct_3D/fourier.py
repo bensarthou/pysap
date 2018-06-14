@@ -13,11 +13,17 @@ Fourier operators for cartesian and non-cartesian space.
 
 
 # Package import
-from .utils import convert_locations_to_mask
+import warnings
+from .utils import convert_locations_to_mask_3D
 from pysap.plugins.mri.reconstruct.fourier import FourierBase
 
 # Third party import
-import pynfft
+try:
+    import pynfft
+except Exception:
+    warnings.warn("pynfft python package has not been found. If needed use "
+                  "the master release.")
+    pass
 import numpy as np
 import scipy.fftpack as pfft
 
@@ -44,7 +50,7 @@ class FFT3(FourierBase):
         """
         self.samples = samples
         self.shape = shape
-        self._mask = convert_locations_to_mask(self.samples, self.shape)
+        self._mask = convert_locations_to_mask_3D(self.samples, self.shape)
 
     def op(self, img):
         """ This method calculates the masked Fourier transform of a 3-D image.

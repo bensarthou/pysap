@@ -57,6 +57,7 @@ def imshow3D(volume, display=False):
     tracker = IndexTracker(ax, volume)
     fig.canvas.mpl_connect('scroll_event', tracker.onscroll)
     if display:
+        plt.axis('off')
         plt.show()
 
 
@@ -270,7 +271,7 @@ def normalize_samples(samples_locations):
     return samples_locations
 
 
-def convert_locations_to_mask(samples_locations, img_shape):
+def convert_locations_to_mask_3D(samples_locations, img_shape):
     """ Return the converted the sampling locations as Cartesian mask.
 
     Parameters
