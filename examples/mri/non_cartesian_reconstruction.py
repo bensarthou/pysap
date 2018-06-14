@@ -27,7 +27,6 @@ from pysap.plugins.mri.reconstruct.utils import convert_mask_to_locations
 import numpy as np
 import scipy.fftpack as pfft
 
-
 # Loading input data
 image = get_sample_data("mri-slice-nifti")
 image.data += np.random.randn(*image.shape) * 20.
@@ -65,20 +64,20 @@ image_rec0.show()
 
 # Start the FISTA reconstruction
 max_iter = 20
-x_final, transform = sparse_rec_fista(
-    data=kspace_obs,
-    wavelet_name="BsplineWaveletTransformATrousAlgorithm",
-    samples=kspace_loc,
-    mu=1e-9,
-    nb_scales=4,
-    lambda_init=1.0,
-    max_nb_of_iter=max_iter,
-    atol=1e-4,
-    non_cartesian=True,
-    uniform_data_shape=image.shape,
-    verbose=1)
-image_rec = pysap.Image(data=np.abs(x_final))
-image_rec.show()
+# x_final, transform = sparse_rec_fista(
+#     data=kspace_obs,
+#     wavelet_name="BsplineWaveletTransformATrousAlgorithm",
+#     samples=kspace_loc,
+#     mu=1e-9,
+#     nb_scales=4,
+#     lambda_init=1.0,
+#     max_nb_of_iter=max_iter,
+#     atol=1e-4,
+#     non_cartesian=True,
+#     uniform_data_shape=image.shape,
+#     verbose=1)
+# image_rec = pysap.Image(data=np.abs(x_final))
+# image_rec.show()
 
 
 #############################################################################

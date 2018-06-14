@@ -35,12 +35,13 @@ from scipy.io import loadmat
 import matplotlib.pyplot as plt
 
 # Load input data
-filename = '/volatile/bsarthou/meas_MID14_gre_800um_iso_128x128x128_FID24.mat'
+filename = '/volatile/bsarthou/datas/' + \
+           'meas_MID14_gre_800um_iso_128x128x128_FID24.mat'
 Iref = loadmat(filename)['ref']
 
 imshow3D(Iref, display=True)
 
-samples = loadmat('/volatile/bsarthou/'
+samples = loadmat('/volatile/bsarthou/datas/'
                   'samples_sparkling_3D_N128_502x1536x8_FID4971.mat')['samples']
 samples = normalize_samples(samples)
 cartesian_samples = convert_locations_to_mask(samples, [128, 128, 128])

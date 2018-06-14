@@ -31,6 +31,5 @@ import progressbar
 from modopt.opt.algorithms import Condat
 from modopt.opt.algorithms import ForwardBackward
 
-
 # Display a welcome message
 print(info())

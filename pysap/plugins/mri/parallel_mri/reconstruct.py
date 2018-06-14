@@ -20,6 +20,7 @@ import progressbar
 # Package import
 from pysap.plugins.mri.reconstruct.utils import fista_logo
 from pysap.plugins.mri.reconstruct.cost import DualGapCost
+from pysap.plugins.mri.reconstruct.cost import MetricCost
 from pysap.plugins.mri.reconstruct.reweight import mReweight
 from pysap.plugins.mri.reconstruct.utils import condatvu_logo
 from pysap.plugins.mri.parallel_mri.proximity import Threshold
@@ -31,6 +32,7 @@ from modopt.opt.linear import Identity
 from modopt.opt.proximity import Positivity
 from modopt.opt.algorithms import Condat, ForwardBackward
 from modopt.opt.reweight import cwbReweight
+from modopt.math.metrics import ssim
 
 
 def sparse_rec_fista(gradient_op, linear_op, mu, lambda_init=1.0,
@@ -298,6 +300,16 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         test_range=4,
         verbose=0,
         plot_output=None)
+
+    # cost_op = MetricCost(
+    #     linear_op=linear_op,
+    #     metric=ssim,
+    #     initial_cost=1.,
+    #     tolerance=1e-6,
+    #     cost_interval=1,
+    #     test_range=4,
+    #     verbose=0,
+    #     plot_output=None)
 
     # Define the optimizer
     opt = Condat(

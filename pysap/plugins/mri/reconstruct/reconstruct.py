@@ -23,6 +23,7 @@ from pysap.plugins.mri.reconstruct.linear import Wavelet2
 from pysap.plugins.mri.reconstruct.utils import unflatten
 from pysap.plugins.mri.reconstruct.utils import fista_logo
 from pysap.plugins.mri.reconstruct.cost import DualGapCost
+from pysap.plugins.mri.reconstruct.cost import MetricCost
 from pysap.plugins.mri.reconstruct.reweight import mReweight
 from pysap.plugins.mri.reconstruct.utils import condatvu_logo
 from pysap.plugins.mri.reconstruct.gradient import GradAnalysis2
@@ -36,6 +37,7 @@ from modopt.opt.proximity import Positivity
 from modopt.opt.proximity import SparseThreshold
 from modopt.opt.algorithms import Condat, ForwardBackward
 from modopt.opt.reweight import cwbReweight
+from modopt.math.metrics import ssim
 
 
 def sparse_rec_fista(data, wavelet_name, samples, mu, nb_scales=4,
@@ -331,10 +333,20 @@ def sparse_rec_condatvu(data, wavelet_name, samples, nb_scales=4,
         prox_op = Identity()
 
     # Define the cost function
-    cost_op = DualGapCost(
+    # cost_op = DualGapCost(
+    #     linear_op=linear_op,
+    #     initial_cost=1e6,
+    #     tolerance=1e-4,
+    #     cost_interval=1,
+    #     test_range=4,
+    #     verbose=0,
+    #     plot_output=None)
+
+    cost_op = MetricCost(
         linear_op=linear_op,
+        metric=ssim,
         initial_cost=1e6,
-        tolerance=1e-4,
+        tolerance=1e-6,
         cost_interval=1,
         test_range=4,
         verbose=0,
