@@ -42,6 +42,8 @@ import matplotlib.pyplot as plt
 Il = get_sample_data("3d-pmri")
 
 Iref = np.squeeze(np.sqrt(np.sum(np.abs(Il)**2, axis=0)))
+# Crop image for using Wavelet2/3 (which only can use cubic volume)
+Iref = Iref[:, :, :128]
 
 imshow3D(Iref, display=True)
 
@@ -82,7 +84,7 @@ max_iter = 10
 #                        nb_scale=4)
 
 linear_op = Wavelet2(
-        nb_scale=4,
+        nb_scale=3,
         wavelet_name='ATrou3D')
 
 

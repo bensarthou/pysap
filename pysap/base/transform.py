@@ -243,7 +243,15 @@ class WaveletTransformBase(with_metaclass(MetaRegister)):
         if not all([e == data.shape[0] for e in data.shape]):
             raise ValueError("Expect a square shape data.")
         if data.ndim != self.data_dim:
-            raise ValueError("Expect a two or three dim data array.")
+            if self.data_dim == 2:
+                raise ValueError("This wavelet can only be applied on 2D"
+                                 " square images")
+            if self.data_dim == 3:
+                raise ValueError("This wavelet can only be applied on 3D"
+                                 " cubic images")
+            else:
+                raise ValueError("Those data dimensions aren't managed by"
+                                 " current transformation")
         if self.is_decimated and not (data.shape[0] // 2**(self.nb_scale) > 0):
             raise ValueError("Can't decimate the data with the specified "
                              "number of scales.")
