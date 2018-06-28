@@ -230,4 +230,5 @@ ax = fig.add_subplot(1, 2, 2)
 ax.matshow(np.abs(ref)[140:350, 100:325], cmap='gray')
 ax.set_title('Reference')
 
+# plt.savefig('results/cartesianR4/best_ssim.png')
 plt.show()
