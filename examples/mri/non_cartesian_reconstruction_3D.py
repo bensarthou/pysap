@@ -58,14 +58,14 @@ kspace_data = fourier_op_gen.op(Iref)
 image_rec0 = fourier_op_gen.adj_op(kspace_data)
 imshow3D(np.abs(image_rec0), display=True)
 
-max_iter = 5
+max_iter = 100
 
 # linear_op = pyWavelet3(wavelet_name="bior6.8",
 #                        nb_scale=3)
 
 linear_op = Wavelet2(
         nb_scale=3,
-        wavelet_name='ATrou3D')
+        wavelet_name='BiOrthogonalTransform3D')
 
 
 fourier_op = NFFT3(samples=samples, shape=Iref.shape)
