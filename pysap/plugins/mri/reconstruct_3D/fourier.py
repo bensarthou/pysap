@@ -74,7 +74,7 @@ class FFT3(FourierBase):
         x: np.ndarray
             masked Fourier transform of the input image.
         """
-        return self._mask * pfft.fftn(img)
+        return self._mask * pfft.fftn(img) / np.sqrt(np.prod(self.shape))
 
     def adj_op(self, x):
         """ This method calculates inverse masked Fourier transform of a 3-D
@@ -90,7 +90,7 @@ class FFT3(FourierBase):
         img: np.ndarray
             inverse 3D discrete Fourier transform of the input coefficients.
         """
-        return pfft.ifftn(self._mask * x)
+        return pfft.ifftn(self._mask * x) * np.sqrt(np.prod(self.shape))
 
 
 class NFFT3(FourierBase):
@@ -215,8 +215,8 @@ class NUFFT(FourierBase):
             self.Jd = Jd
 
         for (i, s) in enumerate(shape):
-            assert(self.shape[i] <= self.Kd[i], 'size of frequency grid'
-                   'must be greater or equal than the image size')
+            assert(self.shape[i] <= self.Kd[i]), 'size of frequency grid' + \
+                   'must be greater or equal than the image size'
 
         if self.platform == 'cpu':
             self.nufftObj = NUFFT_cpu()
@@ -264,8 +264,8 @@ class NUFFT(FourierBase):
             # Forward operator of the NUFFT
             gy = self.nufftObj.forward(gx)
             y = gy.get()
-        print(y.shape)
-        return (1.0 / np.sqrt(len(self.samples))) * y
+
+        return y * 1.0 / (np.prod(self.shape))
 
     def adj_op(self, x):
         """ This method calculates inverse masked non-uniform Fourier
@@ -286,4 +286,4 @@ class NUFFT(FourierBase):
         else:
             gx = self.nufftObj.adjoint(x)
             img = gx.get()
-        return (1.0 / np.sqrt(len(self.samples))) * img
+        return img
