@@ -20,7 +20,7 @@ from pysap.plugins.mri.reconstruct_3D.fourier import NUFFT
 from pysap.plugins.mri.reconstruct.utils import convert_mask_to_locations
 from pysap.plugins.mri.reconstruct.utils import convert_locations_to_mask
 from pysap.plugins.mri.reconstruct_3D.utils import convert_mask_to_locations_3D
-# from pysap.plugins.mri.parallel_mri.utils import convert_locations_to_mask_3D
+from pysap.plugins.mri.reconstruct_3D.utils import convert_locations_to_mask_3D
 
 
 class TestAdjointOperatorFourierTransform(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
         self.N = 64
         self.max_iter = 10
 
-    def test_sampling_converters(self):
+    def test_sampling_converters_2D(self):
         """Test the adjoint operator for the 2D non-Cartesian Fourier transform
         """
         for i in range(self.max_iter):
@@ -43,9 +43,29 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
             samples = convert_mask_to_locations(mask)
             recovered_mask = convert_locations_to_mask(samples,
                                                        (Nx, Ny))
+
             mismatch = (1. - numpy.mean(
                 numpy.allclose(mask, recovered_mask)))
             print("      mismatch = ", mismatch)
+            self.assertTrue(mismatch == 0.0)
+        print(" Test convert mask to samples and it's adjoint passes")
+
+    def test_sampling_converters_3D(self):
+        """Test the adjoint operator for the 3D non-Cartesian Fourier transform
+        """
+        for i in range(self.max_iter):
+            print("Process test convert 3D mask to samples test '{0}'...", i)
+            Nx = numpy.random.randint(8, 512)
+            Ny = numpy.random.randint(8, 512)
+            Nz = numpy.random.randint(8, 512)
+            mask = numpy.random.randint(2, size=(Nx, Ny, Nz))
+            samples = convert_mask_to_locations_3D(mask)
+            recovered_mask = convert_locations_to_mask_3D(samples,
+                                                          (Nx, Ny, Nz))
+            mismatch = (1. - numpy.mean(
+                numpy.allclose(mask, recovered_mask)))
+            print("      mismatch = ", mismatch)
+            self.assertTrue(mismatch == 0.0)
         print(" Test convert mask to samples and it's adjoint passes")
 
     def test_FFT2(self):
@@ -67,6 +87,7 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
                 numpy.isclose(x_d, x_ad,
                               rtol=1e-3)))
             print("      mismatch = ", mismatch)
+            self.assertTrue(mismatch == 0.0)
         print(" FFT2 adjoint test passes")
 
     def test_NFFT2(self):
@@ -106,7 +127,7 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
                                   shape=(self.N, self.N, self.N))
             Img = numpy.random.randn(self.N, self.N, self.N)
             f = numpy.random.randn(self.N, self.N, self.N)
-            f_p = fourier_op_dir.op(Img) / (self.N ** 3)
+            f_p = fourier_op_dir.op(Img)
             I_p = fourier_op_adj.adj_op(f)
             x_d = numpy.dot(Img.flatten(), numpy.conj(I_p).flatten())
             x_ad = numpy.dot(f_p.flatten(), numpy.conj(f).flatten())
@@ -114,6 +135,7 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
                 numpy.isclose(x_d, x_ad,
                               rtol=1e-3)))
             print("      mismatch = ", mismatch)
+            self.assertTrue(mismatch == 0.0)
         print(" FFT3 adjoint test passes")
 
     def test_NFFT3(self):
@@ -129,7 +151,8 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
         #     fourier_op_adj = NFFT3(samples=_samples,
         #                            shape=(self.N, self.N, self.N))
         #     Img = numpy.random.randn(self.N, self.N, self.N) \
-        #           + 1j * numpy.random.randn(self.N, self.N, self.N)
+        #         + 1j * numpy.random.randn(self.N,
+        #                                   self.N, self.N)
         #     f = numpy.random.randn(_samples.shape[0], 1) + \
         #         1j * numpy.random.randn(_samples.shape[0], 1)
         #     f_p = fourier_op_dir.op(Img)
@@ -140,38 +163,41 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
         #         numpy.isclose(x_d, x_ad,
         #                       rtol=1e-3)))
         #     print("      mismatch = ", mismatch)
+        #     self.assertTrue(mismatch == 0.0)
         # print(" NFFT3 adjoint test passes")
 
     def test_NUFFT(self):
         """Test the adjoint operator for the 3D non-uniform Fourier transform
         """
         warnings.warn('No tests will be done on the NUFFT operator')
-        for i in range(self.max_iter):
-            _mask = numpy.random.randint(2, size=(self.N, self.N, self.N))
-            _samples = convert_mask_to_locations_3D(_mask)
-            print('Process NUFFT test {} ...'.format(i))
-            fourier_op_dir = NUFFT(samples=_samples,
-                                   shape=(self.N, self.N, self.N),
-                                   platform='cpu')
-            fourier_op_adj = NUFFT(samples=_samples,
-                                   shape=(self.N, self.N, self.N),
-                                   platform='cpu')
-            Img = numpy.random.randn(self.N, self.N, self.N) \
-                + 1j * numpy.random.randn(self.N, self.N, self.N)
-            f = numpy.random.randn(_samples.shape[0], 1) + \
-                1j * numpy.random.randn(_samples.shape[0], 1)
-            f_p = fourier_op_dir.op(Img)
-            I_p = fourier_op_adj.adj_op(f)
-            x_d = numpy.dot(Img.flatten(), numpy.conj(I_p).flatten())
-            print(x_d)
-            x_ad = numpy.dot(f_p.flatten(), numpy.conj(f).flatten())
-            print(x_ad)
-            print(x_ad/x_d)
-            mismatch = (1. - numpy.mean(
-                numpy.isclose(x_d, x_ad,
-                              rtol=1e-3)))
-            print("      mismatch = ", mismatch)
-        print(" NFFT3 adjoint test passes")
+        # for i in range(self.max_iter):
+        #     _mask = numpy.random.randint(2, size=(self.N, self.N, self.N))
+        #     _samples = convert_mask_to_locations_3D(_mask)
+        #     print('Process NUFFT test {} ...'.format(i))
+        #     fourier_op_dir = NUFFT(samples=_samples,
+        #                            shape=(self.N, self.N, self.N),
+        #                            platform='cpu',
+        #                            Kd=(self.N, self.N, self.N),
+        #                            Jd=1)
+        #     fourier_op_adj = NUFFT(samples=_samples,
+        #                            shape=(self.N, self.N, self.N),
+        #                            platform='cpu',
+        #                            Kd=(self.N, self.N, self.N),
+        #                            Jd=1)
+        #     Img = numpy.random.randn(self.N, self.N, self.N) \
+        #         + 1j * numpy.random.randn(self.N, self.N, self.N)
+        #     f = numpy.random.randn(_samples.shape[0], 1) + \
+        #         1j * numpy.random.randn(_samples.shape[0], 1)
+        #     f_p = fourier_op_dir.op(Img)
+        #     I_p = fourier_op_adj.adj_op(f)
+        #     x_d = numpy.dot(f_p, numpy.conj(f))
+        #     x_ad = numpy.dot(Img.flatten(), numpy.conj(I_p.flatten()))
+        #     mismatch = (1. - numpy.mean(
+        #         numpy.isclose(x_d, x_ad,
+        #                       rtol=1e-3)))
+        #     print("      mismatch = ", mismatch)
+        #     self.assertTrue(mismatch == 0.0)
+        # print(" NUFFT3 adjoint test passes")
 
 
 if __name__ == "__main__":
