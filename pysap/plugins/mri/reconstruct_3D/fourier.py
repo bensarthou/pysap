@@ -177,7 +177,7 @@ class NUFFT(FourierBase):
         to (Jd,)*dims image
     """
 
-    def __init__(self, samples, shape, platform='cpu', Kd=128, Jd=4):
+    def __init__(self, samples, shape, platform='cpu', Kd=None, Jd=None):
         """ Initilize the 'NUFFT' class.
 
         Parameters
@@ -205,14 +205,20 @@ class NUFFT(FourierBase):
         if type(Kd) == int:
             dim = samples.shape[1]  # number of dimensions of the image
             self.Kd = (Kd,)*dim
-        else:
+        elif type(Kd) == tuple:
             self.Kd = Kd
+        elif Kd is None:
+            # Preferential option
+            self.Kd = shape
 
         if type(Jd) == int:
             dim = samples.shape[1]  # number of dimensions of the image
             self.Jd = (Jd,)*dim
-        else:
+        elif type(Kd) == tuple:
             self.Jd = Jd
+        elif Jd is None:
+            # Preferential option
+            self.Jd = (1,)*dim
 
         for (i, s) in enumerate(shape):
             assert(self.shape[i] <= self.Kd[i]), 'size of frequency grid' + \
