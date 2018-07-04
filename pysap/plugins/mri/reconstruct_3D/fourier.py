@@ -202,9 +202,10 @@ class NUFFT(FourierBase):
         self.platform = platform
         self.samples = samples * (2 * np.pi)  # Pynufft use samples in
         # [-pi, pi[ instead of [-0.5, 0.5[
+        self.dim = samples.shape[1]  # number of dimensions of the image
+
         if type(Kd) == int:
-            dim = samples.shape[1]  # number of dimensions of the image
-            self.Kd = (Kd,)*dim
+            self.Kd = (Kd,)*self.dim
         elif type(Kd) == tuple:
             self.Kd = Kd
         elif Kd is None:
@@ -212,31 +213,31 @@ class NUFFT(FourierBase):
             self.Kd = shape
 
         if type(Jd) == int:
-            dim = samples.shape[1]  # number of dimensions of the image
-            self.Jd = (Jd,)*dim
+            self.Jd = (Jd,)*self.dim
         elif type(Kd) == tuple:
             self.Jd = Jd
         elif Jd is None:
             # Preferential option
-            self.Jd = (1,)*dim
+            self.Jd = (1,)*self.dim
 
         for (i, s) in enumerate(shape):
             assert(self.shape[i] <= self.Kd[i]), 'size of frequency grid' + \
                    'must be greater or equal than the image size'
 
+        print('Creating the NUFFT object...')
         if self.platform == 'cpu':
             self.nufftObj = NUFFT_cpu()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
 
         elif self.platform == 'mcpu':
-            warnings.warn('Attemping to use OpenCL plateform. Make sure to'
+            warnings.warn('Attemping to use OpenCL plateform. Make sure to '
                           'have  all the dependecies installed')
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
             self.nufftObj.offload('ocl')  # for multi-CPU computation
 
         elif self.platform == 'gpu':
-            warnings.warn('Attemping to use Cuda plateform. Make sure to'
+            warnings.warn('Attemping to use Cuda plateform. Make sure to '
                           'have  all the dependecies installed')
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
