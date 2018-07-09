@@ -272,7 +272,7 @@ class NUFFT(FourierBase):
             gy = self.nufftObj.forward(gx)
             y = gy.get()
 
-        return y * 1.0 / (np.prod(self.shape))
+        return y * 1.0 / np.sqrt(np.prod(self.shape))
 
     def adj_op(self, x):
         """ This method calculates inverse masked non-uniform Fourier
@@ -288,10 +288,11 @@ class NUFFT(FourierBase):
         img: np.ndarray
             inverse 3D discrete Fourier transform of the input coefficients.
         """
+        # x = x * np.prod(self.shape)
         if self.platform == 'cpu':
             img = self.nufftObj.adjoint(x)
         else:
             cuda_array = self.nufftObj.thr.to_device(x)
             gx = self.nufftObj.adjoint(cuda_array)
             img = gx.get()
-        return img
+        return img * np.sqrt(np.prod(self.shape))

@@ -192,6 +192,7 @@ class TestAdjointOperatorFourierTransform(unittest.TestCase):
         #     I_p = fourier_op_adj.adj_op(f)
         #     x_d = numpy.dot(f_p, numpy.conj(f))
         #     x_ad = numpy.dot(Img.flatten(), numpy.conj(I_p.flatten()))
+        #     print('Ratio: ', x_d/x_ad)
         #     mismatch = (1. - numpy.mean(
         #         numpy.isclose(x_d, x_ad,
         #                       rtol=1e-3)))
