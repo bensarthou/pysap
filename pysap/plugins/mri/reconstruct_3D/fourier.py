@@ -291,6 +291,7 @@ class NUFFT(FourierBase):
         if self.platform == 'cpu':
             img = self.nufftObj.adjoint(x)
         else:
-            gx = self.nufftObj.adjoint(x)
+            cuda_array = self.nufftObj.thr.to_device(x)
+            gx = self.nufftObj.adjoint(cuda_array)
             img = gx.get()
         return img
