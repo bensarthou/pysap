@@ -48,13 +48,13 @@ mask.show()
 # Get the locations of the kspace samples and the associated observations
 kspace_loc = convert_mask_to_locations(mask.data)
 # fourier_op = NFFT2(samples=kspace_loc, shape=image.shape)
-fourier_op = NUFFT(samples=kspace_loc, shape=image.shape, platform='mcpu')
+fourier_op = NUFFT(samples=kspace_loc, shape=image.shape, platform='gpu')
 kspace_obs = fourier_op.op(image.data)
 
 # Zero order solution
 image_rec0 = pysap.Image(data=fourier_op.adj_op(kspace_obs),
                          metadata=image.metadata)
-image_rec0.show()
+# image_rec0.show()
 
 
 #############################################################################
@@ -66,7 +66,7 @@ image_rec0.show()
 # maximum number of iterations. Fill free to play with this parameter.
 
 # Start the FISTA reconstruction
-max_iter = 20
+max_iter = 200
 x_final, transform = sparse_rec_fista(
     data=kspace_obs,
     wavelet_name="BsplineWaveletTransformATrousAlgorithm",
@@ -93,7 +93,7 @@ image_rec.show()
 # maximum number of iterations. Fill free to play with this parameter.
 
 # Start the CONDAT-VU reconstruction
-max_iter = 20
+max_iter = 200
 x_final, transform = sparse_rec_condatvu(
     data=kspace_obs,
     wavelet_name="BsplineWaveletTransformATrousAlgorithm",
@@ -114,4 +114,5 @@ x_final, transform = sparse_rec_condatvu(
     uniform_data_shape=image.shape,
     verbose=1)
 image_rec = pysap.Image(data=np.abs(x_final))
+print(image_rec.data)
 image_rec.show()

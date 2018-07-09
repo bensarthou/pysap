@@ -17,7 +17,7 @@ We also add some gaussian noise in the image space.
 
 # Package import
 from pysap.data import get_sample_data
-from pysap.plugins.mri.reconstruct_3D.fourier import NFFT3
+from pysap.plugins.mri.reconstruct_3D.fourier import NFFT3, NUFFT
 from pysap.plugins.mri.reconstruct_3D.utils import imshow3D
 from pysap.plugins.mri.parallel_mri.gradient import Gradient_pMRI
 from pysap.plugins.mri.reconstruct_3D.linear import pyWavelet3
@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 # Load input data
 Il = get_sample_data("3d-pmri")
 Iref = np.squeeze(np.sqrt(np.sum(np.abs(Il)**2, axis=0)))
-
+Iref.astype(np.complex64)
 imshow3D(Iref, display=True)
 
 samples = get_sample_data("mri-radial-3d-samples").data
@@ -48,19 +48,22 @@ samples = normalize_samples(samples)
 # We then reconstruct the zero order solution.
 
 # Generate the subsampled kspace
-fourier_op_gen = NFFT3(samples=samples, shape=Iref.shape)
+# fourier_op_gen = NFFT3(samples=samples, shape=Iref.shape)
+fourier_op_gen = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')
+
 kspace_data = fourier_op_gen.op(Iref)
 
 # Zero order solution
 image_rec0 = fourier_op_gen.adj_op(kspace_data)
 imshow3D(np.abs(image_rec0), display=True)
 
-max_iter = 5
+max_iter = 20
 
 linear_op = pyWavelet3(wavelet_name="sym4",
                        nb_scale=4)
 
-fourier_op = NFFT3(samples=samples, shape=Iref.shape)
+# fourier_op = NFFT3(samples=samples, shape=Iref.shape)
+fourier_op = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')
 
 print('Starting Lipschitz constant computation')
 
@@ -80,6 +83,7 @@ x_final, transform, cost = sparse_rec_fista(
     verbose=1,
     get_cost=True)
 
+print(np.abs(x_final))
 imshow3D(np.abs(x_final), display=True)
 plt.figure()
 plt.plot(cost)
@@ -103,5 +107,5 @@ x_final, transform = sparse_rec_condatvu(
     add_positivity=False,
     atol=1e-4,
     verbose=1)
-
+print(np.abs(x_final))
 imshow3D(np.abs(x_final), display=True)
