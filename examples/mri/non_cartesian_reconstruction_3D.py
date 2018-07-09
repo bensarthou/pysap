@@ -21,6 +21,7 @@ from pysap.plugins.mri.reconstruct_3D.fourier import NFFT3, NUFFT
 from pysap.plugins.mri.reconstruct_3D.utils import imshow3D
 from pysap.plugins.mri.parallel_mri.gradient import Gradient_pMRI
 from pysap.plugins.mri.reconstruct_3D.linear import pyWavelet3
+from pysap.plugins.mri.reconstruct.linear import Wavelet2
 from pysap.plugins.mri.reconstruct_3D.utils import normalize_samples
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_fista
 from pysap.plugins.mri.parallel_mri.reconstruct import sparse_rec_condatvu
@@ -57,10 +58,15 @@ kspace_data = fourier_op_gen.op(Iref)
 image_rec0 = fourier_op_gen.adj_op(kspace_data)
 imshow3D(np.abs(image_rec0), display=True)
 
-max_iter = 20
+max_iter = 100
 
-linear_op = pyWavelet3(wavelet_name="sym4",
-                       nb_scale=4)
+# linear_op = pyWavelet3(wavelet_name="bior6.8",
+#                        nb_scale=3)
+
+linear_op = Wavelet2(
+        nb_scale=3,
+        wavelet_name='BiOrthogonalTransform3D')
+
 
 # fourier_op = NFFT3(samples=samples, shape=Iref.shape)
 fourier_op = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')

@@ -19,11 +19,13 @@ import time
 import progressbar
 
 # Package import
+from pysap.base.utils import unflatten
 from pysap.utils import fista_logo
 from pysap.utils import condatvu_logo
-from pysap.plugins.mri.reconstruct.cost import DualGapCost
-from pysap.plugins.mri.reconstruct.reweight import mReweight
-from pysap.plugins.mri.parallel_mri.proximity import Threshold
+from pysap.numerics.cost import DualGapCost
+from pysap.numerics.cost import MetricCost
+from pysap.numerics.reweight import mReweight
+from pysap.numerics.proximity import Threshold
 
 # Third party import
 import numpy as np
@@ -32,6 +34,7 @@ from modopt.opt.linear import Identity
 from modopt.opt.proximity import Positivity
 from modopt.opt.algorithms import Condat, ForwardBackward
 from modopt.opt.reweight import cwbReweight
+from modopt.math.metrics import ssim
 
 
 def sparse_rec_fista(gradient_op, linear_op, mu, lambda_init=1.0,
@@ -149,7 +152,8 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
                         std_est_method=None, std_thr=2.,
                         mu=1e-6, tau=None, sigma=None, relaxation_factor=1.0,
                         nb_of_reweights=1, max_nb_of_iter=150,
-                        add_positivity=False, atol=1e-4, verbose=0):
+                        add_positivity=False, atol=1e-4, verbose=0,
+                        get_cost=False):
     """ The Condat-Vu sparse reconstruction with reweightings.
 
     .. note:: At the moment, supports only 2D data.
@@ -194,6 +198,8 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         tolerance threshold for convergence.
     verbose: int, default 0
         the verbosity level.
+    get_cost: bool (default False)
+        computes the cost of the objective function
 
     Returns
     -------
@@ -296,6 +302,16 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         verbose=0,
         plot_output=None)
 
+    # cost_op = MetricCost(
+    #     linear_op=linear_op,
+    #     metric=ssim,
+    #     initial_cost=1.,
+    #     tolerance=1e-6,
+    #     cost_interval=1,
+    #     test_range=4,
+    #     verbose=0,
+    #     plot_output=None)
+
     # Define the optimizer
     opt = Condat(
         x=primal,
@@ -313,13 +329,22 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
         tau_update=None,
         auto_iterate=False)
 
+    if get_cost:
+        cost = np.zeros(max_nb_of_iter)
     # Perform the first reconstruction
     if verbose > 0:
         print("Starting optimization...")
     with progressbar.ProgressBar(redirect_stdout=True,
                                  max_value=max_nb_of_iter) as bar:
         for i in range(max_nb_of_iter):
+            if get_cost:
+                cost[i] = cost_op.cost
             opt._update()
+            if opt.converge:
+                print(' - Converged!')
+                if get_cost:
+                    cost = cost[0:i]
+                break
             bar.update(i)
 
     opt.x_final = opt._x_new
@@ -360,4 +385,7 @@ def sparse_rec_condatvu(gradient_op, linear_op, std_est=None,
     linear_op.set_coeff(linear_op.unflatten(
                         opt.y_final, linear_op.coeffs_shape))
 
-    return x_final, linear_op.transform
+    if get_cost:
+        return x_final, linear_op.transform, cost
+    else:
+        return x_final, linear_op.transform

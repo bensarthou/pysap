@@ -28,7 +28,6 @@ from pysap.plugins.mri.reconstruct.utils import convert_mask_to_locations
 import numpy as np
 import scipy.fftpack as pfft
 
-
 # Loading input data
 image = get_sample_data("mri-slice-nifti")
 image.data += np.random.randn(*image.shape) * 20.

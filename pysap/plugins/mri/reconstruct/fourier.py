@@ -143,6 +143,9 @@ class NFFT2(FourierBase):
         self.plan = pynfft.NFFT(N=shape, M=len(samples))
         self.shape = shape
         self.samples = samples
+        if(samples.max() >= 0.5 and samples.min() < -0.5):
+            print(samples.max())
+            raise ValueError('the samples must be normalised in [-0.5, 0.5[ ')
         self.plan.x = self.samples
         self.plan.precompute()
 
