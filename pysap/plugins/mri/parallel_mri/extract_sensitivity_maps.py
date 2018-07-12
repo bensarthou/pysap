@@ -75,9 +75,9 @@ def gridding_nd(points, values, img_shape, method='linear'):
     np.ndarray
         The gridded solution of shape img_shape
     """
-    X = [np.linespace(np.min(points), np.max(points), img_shape[l],
-                      endpoint=False) for l in range(points.shape[1])]
-    grid = np.meshgrid(*X)
+    X = [np.linspace(np.min(points), np.max(points), img_shape[l],
+                     endpoint=False) for l in range(points.shape[1])]
+    grid = tuple(np.meshgrid(*X))
     return griddata(points,
                     values,
                     grid,
