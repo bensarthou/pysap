@@ -16,6 +16,7 @@ Fourier operators for cartesian and non-cartesian space.
 import warnings
 from .utils import convert_locations_to_mask_3D
 from pysap.plugins.mri.reconstruct.fourier import FourierBase
+from modopt.interface.errors import warn
 
 # Third party import
 try:
@@ -155,7 +156,23 @@ class NFFT3(FourierBase):
         return (1.0 / np.sqrt(self.plan.M)) * self.plan.adjoint()
 
 
-class NUFFT(FourierBase):
+class Singleton:
+    numOfInstances = 0
+
+    def countInstances(cls):
+        cls.numOfInstances += 1
+
+    countInstances = classmethod(countInstances)
+
+    def getNumInstances(cls):
+        return cls.numOfInstances
+    getNumInstances = classmethod(getNumInstances)
+
+    def __init__(self):
+        self.countInstances()
+
+
+class NUFFT(FourierBase, Singleton):
     """  N-D non uniform Fast Fourrier Transform class
 
     Attributes
@@ -176,6 +193,7 @@ class NUFFT(FourierBase):
         Size of the interpolator kernel. If int, will be evaluated
         to (Jd,)*dims image
     """
+    numOfInstances = 0
 
     def __init__(self, samples, shape, platform='cpu', Kd=None, Jd=None):
         """ Initilize the 'NUFFT' class.
@@ -198,6 +216,7 @@ class NUFFT(FourierBase):
             to (Jd,)*dims image
 
         """
+
         self.shape = shape
         self.platform = platform
         self.samples = samples * (2 * np.pi)  # Pynufft use samples in
@@ -230,17 +249,21 @@ class NUFFT(FourierBase):
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
 
         elif self.platform == 'mcpu':
-            warnings.warn('Attemping to use OpenCL plateform. Make sure to '
-                          'have  all the dependecies installed',
-                          stacklevel=0)
+            warn('Attemping to use OpenCL plateform. Make sure to '
+                 'have  all the dependecies installed')
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
             self.nufftObj.offload('ocl')  # for multi-CPU computation
 
         elif self.platform == 'gpu':
-            warnings.warn('Attemping to use Cuda plateform. Make sure to '
-                          'have  all the dependecies installed',
-                          stacklevel=0)
+            Singleton.__init__(self)
+
+            warn('Attemping to use Cuda plateform. Make sure to '
+                 'have  all the dependecies installed and '
+                 'to create only one instance of NUFFT GPU')
+            if self.getNumInstances() > 1:
+                raise RuntimeError('You have created more than one GPU NUFFT'
+                                   ' object')
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
             self.nufftObj.offload('cuda')  # for GPU computation
@@ -291,16 +314,11 @@ class NUFFT(FourierBase):
             inverse 3D discrete Fourier transform of the input coefficients.
         """
         if self.platform == 'cpu':
-            img = self.nufftObj.adjoint(x.astype(dtype))
+            img = self.nufftObj.adjoint(x)
         else:
             dtype = np.complex64
-            cuda_array = self.nufftObj.thr.to_device(x)
+            cuda_array = self.nufftObj.thr.to_device(x.astype(dtype))
             gx = self.nufftObj.adjoint(cuda_array)
             img = gx.get()
-        return img * np.sqrt(np.prod(self.shape))
 
-        def __delete__(self, instance):
-            print('Delete NUFFT')
-            if self.platform == 'gpu':
-                print('Delete NUFFT')
-                # Something like reikna.cluda.API.release()
+        return img * np.sqrt(np.prod(self.shape))
