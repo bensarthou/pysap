@@ -231,14 +231,16 @@ class NUFFT(FourierBase):
 
         elif self.platform == 'mcpu':
             warnings.warn('Attemping to use OpenCL plateform. Make sure to '
-                          'have  all the dependecies installed')
+                          'have  all the dependecies installed',
+                          stacklevel=0)
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
             self.nufftObj.offload('ocl')  # for multi-CPU computation
 
         elif self.platform == 'gpu':
             warnings.warn('Attemping to use Cuda plateform. Make sure to '
-                          'have  all the dependecies installed')
+                          'have  all the dependecies installed',
+                          stacklevel=0)
             self.nufftObj = NUFFT_hsa()
             self.nufftObj.plan(self.samples, self.shape, self.Kd, self.Jd)
             self.nufftObj.offload('cuda')  # for GPU computation
@@ -288,11 +290,17 @@ class NUFFT(FourierBase):
         img: np.ndarray
             inverse 3D discrete Fourier transform of the input coefficients.
         """
-        # x = x * np.prod(self.shape)
         if self.platform == 'cpu':
-            img = self.nufftObj.adjoint(x)
+            img = self.nufftObj.adjoint(x.astype(dtype))
         else:
+            dtype = np.complex64
             cuda_array = self.nufftObj.thr.to_device(x)
             gx = self.nufftObj.adjoint(cuda_array)
             img = gx.get()
         return img * np.sqrt(np.prod(self.shape))
+
+        def __delete__(self, instance):
+            print('Delete NUFFT')
+            if self.platform == 'gpu':
+                print('Delete NUFFT')
+                # Something like reikna.cluda.API.release()

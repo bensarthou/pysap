@@ -291,7 +291,7 @@ def convert_locations_to_mask_3D(samples_locations, img_shape):
     samples_locations[:, 0] *= img_shape[0]
     samples_locations[:, 1] *= img_shape[1]
     samples_locations[:, 2] *= img_shape[2]
-    samples_locations = np.round(samples_locations)
+    samples_locations = np.round(samples_locations) - 1
     samples_locations = samples_locations.astype("int")
     mask = np.zeros(img_shape)
     mask[samples_locations[:, 0],
