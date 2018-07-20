@@ -49,8 +49,8 @@ samples = normalize_samples(samples)
 # We then reconstruct the zero order solution.
 
 # Generate the subsampled kspace
-# fourier_op_gen = NFFT3(samples=samples, shape=Iref.shape)
-fourier_op_gen = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')
+fourier_op_gen = NFFT3(samples=samples, shape=Iref.shape)
+# fourier_op_gen = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')
 
 kspace_data = fourier_op_gen.op(Iref)
 
@@ -60,16 +60,12 @@ imshow3D(np.abs(image_rec0), display=True)
 
 max_iter = 100
 
-# linear_op = pyWavelet3(wavelet_name="bior6.8",
-#                        nb_scale=3)
-
-linear_op = Wavelet2(
-        nb_scale=3,
-        wavelet_name='BiOrthogonalTransform3D')
+linear_op = pyWavelet3(wavelet_name="sym8",
+                       nb_scale=3)
 
 
-# fourier_op = NFFT3(samples=samples, shape=Iref.shape)
-fourier_op = NUFFT(samples=samples, shape=Iref.shape, platform='gpu')
+fourier_op = NFFT3(samples=samples, shape=Iref.shape)
+# fourier_op = NUFFT(samples=samples, shape=Iref.shape, platform='mcpu')
 
 print('Starting Lipschitz constant computation')
 
